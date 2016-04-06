@@ -40,12 +40,54 @@ var fps = 0;
 var fpsCount = 0;
 var fpsTime = 0;
 
+// loads the image to use in the level tiles
+var tileset = document.createElement("img");
+tileset.src = "tileset.png";
+
 // load an image to draw
 var chuckNorris = document.createElement("img");
 chuckNorris.src = "hero.png";
 
 var player = new Player();
 var keyboard = new Keyboard();
+
+// checks how many layers are in the map
+var LAYER_COUNT = 3;
+// tells the code how high and long the map is
+var MAP = {tw:60, th:15};
+// the width and height of a tile
+var TILE = 35;
+var TILESET_TILE = TILE * 2;
+// the amount of pixels between the image border and the tile image in the tilemap
+var TILESET_PADDING = 2;
+// the amount of pixels between the tile image in the tilemap
+var TILESET_SPACING = 2;
+// the amount of columns of tile images in the tileset
+var TILESET_COUNT_X = 14;
+// the amount of rows of tile images in the tileset
+var TILESET_COUNT_Y = 14;
+
+function drawMap()
+{
+	for(var layeridx=0; layeridx<LAYER_COUNT;layeridx++)
+	{
+		var idx = 0;
+		for(var y = 0; y < level1.layers[layeridx].height; y++)
+		{
+			for(var x = 0; x < level1.layers[layeridx].width; x++)
+			{
+				if(level1.layers[layeridx].data[idx]!=0 )
+				{
+					var tileIndex = level1.layers[layeridx].data[idx] - 1;
+					var sx = TILESET_PADDING + (tileIndex % TILESET_COUNT_X) * (TILESET_TILE + TILESET_SPACING);
+					var sy = TILESET_PADDING + (Math.floor(tileIndex / TILESET_COUNT_Y)) * (TILESET_TILE + TILESET_SPACING);
+					context.drawImage(tileset, sx, sy, TILESET_TILE, TILESET_TILE, x*TILE, (y-1)*TILE, TILESET_TILE, TILESET_TILE);
+				}
+				idx++;
+			}
+		}
+	}
+}
 
 function run()
 {
@@ -56,6 +98,8 @@ function run()
 	
 	player.update(deltaTime);
 	player.draw();
+
+	var deltaTime = drawMap();
 
 	// update the frame counter 
 	fpsTime += deltaTime;
