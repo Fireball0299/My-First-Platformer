@@ -32,23 +32,6 @@ function getDeltaTime()
 var SCREEN_WIDTH = canvas.width;
 var SCREEN_HEIGHT = canvas.height;
 
-
-// some variables to calculate the Frames Per Second (FPS - this tells use
-// how fast our game is running, and allows us to make the game run at a 
-// constant speed)
-var fps = 0;
-var fpsCount = 0;
-var fpsTime = 0;
-
-// loads the image to use in the level tiles
-var tileset = document.createElement("img");
-tileset.src = "tileset.png";
-
-// load an image to draw
-var chuckNorris = document.createElement("img");
-chuckNorris.src = "hero.png";
-
-var player = new Player();
 var keyboard = new Keyboard();
 
 // checks how many layers are in the map
@@ -66,6 +49,112 @@ var TILESET_SPACING = 2;
 var TILESET_COUNT_X = 14;
 // the amount of rows of tile images in the tileset
 var TILESET_COUNT_Y = 14;
+
+var METER = TILE;
+var GRAVITY = METER * 9.8 * 6;
+// the max horizontal speed, '10 tiles per second'
+var MAXDX = METER * 10;
+// the max vertical speed, '15 tiles per second'
+var MAXDY = METER * 15;
+// the horizontal acceleration - takes 1/2 a second to reach maxdx
+var ACCEL = MAXDX * 2;
+// the horizontal friction - takes 1/6 of a second to stop from maxdx
+var FRICTION = MAXDX * 6;
+var JUMP = METER * 1500;
+
+var player = new Player();
+
+// this array holds the simplified collision data
+var cells = [];
+function initialize()
+{
+	// activate the collision map
+	for(var layerIdx = 0; layerIdx < LAYER_COUNT; layerIdx++)
+	{
+		cells[layerIdx] = [];
+		var idx = 0;
+		for(var y = 0; y < level1.layers[layerIdx].height; y++)
+		{
+			cells[layerIdx][y] = [];
+			for(var x = 0; x < level1.layers[layerIdx].width; x++)
+			{
+				if(level1.layers[layerIdx].data[idx] != 0)
+				{
+					cells[layerIdx][y][x] = 1;
+					cells[layerIdx][y-1][x] = 1;
+					cells[layerIdx][y-1][x+1] = 1;
+					cells[layerIdx][y][x+1] = 1;
+				}
+				else if(cells[layerIdx][y][x] != 1)
+				{
+					cells[layerIdx][y][x] = 0;
+				}
+				idx++;
+			}
+		}
+	}
+}
+
+// some variables to calculate the Frames Per Second (FPS - this tells use
+// how fast our game is running, and allows us to make the game run at a 
+// constant speed)
+var fps = 0;
+var fpsCount = 0;
+var fpsTime = 0;
+
+// loads the image to use in the level tiles
+var tileset = document.createElement("img");
+tileset.src = "tileset.png";
+
+// load an image to draw
+var chuckNorris = document.createElement("img");
+chuckNorris.src = "hero.png";
+
+var LAYER_COUNT = 3;
+var LAYER_BACKGROUND = 0;
+var LAYER_PLATFORMS = 1;
+var LAYER_LADDERS = 2;
+
+var player = new Player();
+
+function cellAtPixelCoord(layer, x, y)
+{
+	if(x<0 || x>SCREEN_WIDTH)
+		return 1;
+	// this lets the player fall of the screen, 'meaning death'
+	if(y>SCREEN_HEIGHT)
+		return 0;
+	return cellAtTileCoord(layer, p2t(x), p2t(y));
+};
+
+function cellAtTileCoord(layer, tx, ty)
+{
+	if(tx<0 || tx>=MAP.tw)
+		return 1;
+	// this lets the player fall of the screen, 'meaning death'
+	if(ty>=MAP.th)
+		return 0;
+	return cells[layer][tx][ty];
+};
+
+function tileToPixel(tile)
+{
+	return tile * TILE;
+};
+
+function pixelToTile(pixel)
+{
+	return Math.floor(pixel/TILE);
+};
+
+function bound(value, min, max)
+{
+	if(value < min)
+		return min;
+	if(value > max)
+		return max;
+	return value;
+}
 
 function drawMap()
 {
@@ -117,6 +206,7 @@ function run()
 	context.fillText("FPS: " + fps, 5, 20, 100);
 }
 
+initialize();
 
 //-------------------- Don't modify anything below here
 
